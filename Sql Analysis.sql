@@ -23,22 +23,17 @@ UPDATE dbo.taxi_trips SET lpep_dropoff_date = CONVERT(DATE, lpep_dropoff_datetim
 DELETE FROM dbo.taxi_trips WHERE store_and_fwd_flag = 'Y';
 
 --2)Only keep street-hailed trips paid by card or cash with a standard rate
---DELETE FROM dbo.taxi_trips WHERE trip_type <> 1 AND 
 DELETE FROM dbo.taxi_trips WHERE trip_type NOT IN (1) OR payment_type NOT IN (1,2) OR RatecodeID <> 1;
---SELECT COUNT(*) FROM dbo.taxi_trips WHERE trip_type = 1 AND payment_type IN (1,2) AND RatecodeID =1;
 
 --3)Remove trips with dates before 2017 or after 2020
 DELETE FROM dbo.taxi_trips WHERE lpep_pickup_date < '2017-01-01' OR lpep_pickup_date > '2020-12-31';
---DELETE FROM dbo.taxi_trips WHERE lpep_dropoff_date < '2017-01-01' OR lpep_pickup_date > '2020-12-31'; --0 rows affected
 
 --4)Remove trips with pickup and drop into unknown zones
 --Loaction ID = 264 and 265 are unknown zones.
 DELETE FROM dbo.taxi_trips WHERE [PULocationID] IN (264, 265) OR [DOLocationID] IN (264, 265);
---SELECT * FROM dbo.taxi_trips WHERE [PULocationID] IN (264, 265) OR [DOLocationID] IN (264, 265);
 
 --5)Trips with no passengers = 1 passenger
 UPDATE dbo.taxi_trips SET [passenger_count] = 1 WHERE [passenger_count] = 0 OR [passenger_count] IS NULL;
---SELECT * FROM dbo.taxi_trips WHERE [passenger_count] = 0;
 
 --6)If pick date/ time is after drop off, swap them
 UPDATE dbo.taxi_trips SET [lpep_pickup_time] = [lpep_dropoff_time], 
@@ -46,17 +41,14 @@ UPDATE dbo.taxi_trips SET [lpep_pickup_time] = [lpep_dropoff_time],
 						  [lpep_dropoff_time] = [lpep_pickup_time],
 						  [lpep_dropoff_date] = [lpep_pickup_date]
 WHERE [lpep_pickup_datetime] > [lpep_dropoff_datetime];
---SELECT * FROM dbo.taxi_trips WHERE [lpep_pickup_datetime] > [lpep_dropoff_datetime];
 
 --7)Remove trips larger than a day
 DELETE FROM dbo.taxi_trips WHERE DATEDIFF(day, [lpep_pickup_datetime], [lpep_dropoff_datetime]) = 1 AND 
 DATEDIFF(second, [lpep_pickup_datetime], [lpep_dropoff_datetime]) >= 86400 OR
 DATEDIFF(day, [lpep_pickup_datetime], [lpep_dropoff_datetime]) > 1;
---SELECT [lpep_pickup_datetime], [lpep_dropoff_datetime], DATEDIFF(day, [lpep_pickup_datetime], [lpep_dropoff_datetime]) as days, DATEDIFF(second, [lpep_pickup_datetime], [lpep_dropoff_datetime]) as seconds from dbo.taxi_trips;
 
 --8)Remove trips with distance and fare amount = 0
 DELETE FROM dbo.taxi_trips WHERE [trip_distance] = 0 AND [fare_amount] = 0;
---SELECT * FROM dbo.taxi_trips WHERE [trip_distance] = 0 AND [fare_amount] = 0; 
 
 --9)Trips with fare taxes & subcharges as negative shoulds be positive
 UPDATE dbo.taxi_trips SET [fare_amount] = ABS([fare_amount]), [extra] = ABS([extra]), [mta_tax] = ABS([mta_tax]),
@@ -78,7 +70,7 @@ UPDATE dbo.taxi_trips SET times_of_day = CASE
 END;
 
 
---Data Analysis:
+--Data Analysis for year 2020:
 --Get start date and end date for that week no and respective year.
 SELECT TOP 1 DATE FROM dbo.calendar WHERE FiscalYear = 2017 AND FiscalWeekOfYear = 10 ORDER BY DATE ASC;
 SELECT TOP 1 DATE FROM dbo.calendar WHERE FiscalYear = 2017 AND FiscalWeekOfYear = 10 ORDER BY DATE DESC;
