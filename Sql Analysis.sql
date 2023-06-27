@@ -1,3 +1,8 @@
+/*
+NYC Taxi Trip Data Analysis
+Skills used: Joins, CTE's, Windows Function, Aggregate Function, Numeric Function, Creating View, Converting Data Types, CASE statement
+*/
+
 --Display all records
 SELECT * FROM dbo.taxi_zones;
 SELECT * FROM DBO.taxi_trips;
